@@ -123,21 +123,21 @@ export function ErpApp() {
   const [language, setLanguage] = useState<Language>("en");
   const [active, setActive] = useState<ModuleKey>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isOnline, setIsOnline] = useState(() => {
-    if (typeof navigator === "undefined") return true;
-    return navigator.onLine;
-  });
+  const [isOnline, setIsOnline] = useState(true);
   const [gstBill, setGstBill] = useState(true);
 
   useEffect(() => {
+    const syncOnlineStatus = () => setIsOnline(navigator.onLine);
     const online = () => setIsOnline(true);
     const offline = () => setIsOnline(false);
+    const statusTimer = window.setTimeout(syncOnlineStatus, 0);
     window.addEventListener("online", online);
     window.addEventListener("offline", offline);
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/service-worker.js").catch(() => {});
     }
     return () => {
+      window.clearTimeout(statusTimer);
       window.removeEventListener("online", online);
       window.removeEventListener("offline", offline);
     };
