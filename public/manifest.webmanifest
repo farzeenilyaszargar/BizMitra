@@ -1,0 +1,17 @@
+{
+  "name": "Vyapar Setu ERP",
+  "short_name": "Vyapar Setu",
+  "description": "Simple ERP for kirana, mandi and trader businesses in India.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f8f5",
+  "theme_color": "#0f766e",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
