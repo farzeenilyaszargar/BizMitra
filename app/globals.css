@@ -276,12 +276,12 @@ button {
   border-radius: 8px;
   color: #ffffff;
   display: grid;
-  gap: 22px;
-  grid-template-columns: minmax(0, 1fr) 380px;
-  margin: 0 auto 18px;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  margin: 0 auto 12px;
   max-width: 1440px;
   overflow: hidden;
-  padding: 28px;
+  padding: 18px 20px;
 }
 
 .notice {
@@ -405,17 +405,17 @@ button {
 }
 
 .hero-copy h1 {
-  font-size: clamp(2rem, 4vw, 4.4rem);
+  font-size: clamp(1.65rem, 3vw, 3.15rem);
   letter-spacing: 0;
-  line-height: 0.98;
-  margin: 14px 0;
+  line-height: 1;
+  margin: 8px 0;
   max-width: 920px;
 }
 
 .hero-copy p {
   color: #dff8f1;
-  font-size: 1.02rem;
-  line-height: 1.6;
+  font-size: 0.92rem;
+  line-height: 1.35;
   margin: 0;
   max-width: 760px;
 }
@@ -426,14 +426,15 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 999px;
   display: inline-flex;
+  font-size: 0.84rem;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 5px 10px;
 }
 
 .quick-actions {
   align-content: end;
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .quick-actions button {
@@ -444,9 +445,9 @@ button {
   color: #0f3f39;
   display: flex;
   font-weight: 800;
-  gap: 10px;
-  min-height: 58px;
-  padding: 0 16px;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 12px;
 }
 
 .workspace-grid,
@@ -917,11 +918,12 @@ button {
   }
 
   .hero-workspace {
-    padding: 20px;
+    gap: 14px;
+    padding: 16px;
   }
 
   .hero-copy h1 {
-    font-size: 2.18rem;
+    font-size: 1.85rem;
   }
 
   .quick-actions,
