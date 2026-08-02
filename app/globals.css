@@ -612,6 +612,13 @@ button {
   width: 100%;
 }
 
+.mini-form input[readonly] {
+  background: #edf3f1;
+  border-color: #bfd2cb;
+  color: #334155;
+  cursor: not-allowed;
+}
+
 .toggle-row {
   align-items: center;
   border: 1px solid #d7dfd9;
@@ -645,6 +652,13 @@ button {
   color: #64748b;
   font-size: 0.8rem;
   line-height: 1.4;
+}
+
+.locked-note {
+  color: #0f766e;
+  font-size: 0.78rem;
+  font-weight: 800;
+  margin: -4px 0 0;
 }
 
 .mini-form {

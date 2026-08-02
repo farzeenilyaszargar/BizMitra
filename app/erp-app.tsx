@@ -185,6 +185,7 @@ type PaymentForm = {
 
 type ItemForm = {
   catalogSearch: string;
+  catalogLocked: boolean;
   name: string;
   unit: string;
   hsn: string;
@@ -397,6 +398,7 @@ function applyCatalogToItemForm(current: ItemForm, catalogItem: GstCatalogItem):
   return {
     ...current,
     catalogSearch: catalogItem.name,
+    catalogLocked: true,
     name: catalogItem.name,
     unit: catalogItem.unit,
     hsn: catalogItem.hsn,
@@ -963,7 +965,8 @@ function Billing({ state, mutate }: { state: BusinessState; mutate: (updater: (c
 }
 
 function Inventory({ state, mutate }: { state: BusinessState; mutate: (updater: (current: BusinessState) => BusinessState, message: string) => void }) {
-  const [form, setForm] = useState<ItemForm>({ catalogSearch: "", name: "", unit: "pcs", hsn: "", stock: "0", lowStock: "5", saleRate: "0", purchaseRate: "0", gstRate: "0" });
+  const blankItemForm: ItemForm = { catalogSearch: "", catalogLocked: false, name: "", unit: "pcs", hsn: "", stock: "0", lowStock: "5", saleRate: "0", purchaseRate: "0", gstRate: "0" };
+  const [form, setForm] = useState<ItemForm>(blankItemForm);
   const catalogMatches = useMemo(() => searchCatalogItems(form.catalogSearch), [form.catalogSearch]);
   function addItem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -984,10 +987,10 @@ function Inventory({ state, mutate }: { state: BusinessState; mutate: (updater: 
       }, ...current.items],
       ledger: [{ id: id("led"), at: today(), type: "Item", description: `Added item ${form.name.trim()}`, debit: 0, credit: 0 }, ...current.ledger],
     }), `Added item ${form.name}.`);
-    setForm({ catalogSearch: "", name: "", unit: "pcs", hsn: "", stock: "0", lowStock: "5", saleRate: "0", purchaseRate: "0", gstRate: "0" });
+    setForm(blankItemForm);
   }
   function updateCatalogSearch(value: string) {
-    setForm({ ...form, catalogSearch: value });
+    setForm({ ...form, catalogSearch: value, catalogLocked: false });
   }
   function chooseCatalogItem(catalogItem: GstCatalogItem) {
     setForm(applyCatalogToItemForm(form, catalogItem));
@@ -1020,7 +1023,8 @@ function Inventory({ state, mutate }: { state: BusinessState; mutate: (updater: 
           <label>Name<input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>
           <label>Unit<input value={form.unit} onChange={(event) => setForm({ ...form, unit: event.target.value })} /></label>
           <label>HSN<input value={form.hsn} onChange={(event) => setForm({ ...form, hsn: event.target.value })} /></label>
-          <label>GST %<input value={form.gstRate} onChange={(event) => setForm({ ...form, gstRate: event.target.value })} type="number" /></label>
+          <label>GST %<input value={form.gstRate} onChange={(event) => setForm({ ...form, gstRate: event.target.value })} type="number" readOnly={form.catalogLocked} aria-readonly={form.catalogLocked} /></label>
+          {form.catalogLocked ? <p className="locked-note">GST is locked from the selected catalog item.</p> : null}
           <label>Opening stock<input value={form.stock} onChange={(event) => setForm({ ...form, stock: event.target.value })} type="number" /></label>
           <label>Low stock<input value={form.lowStock} onChange={(event) => setForm({ ...form, lowStock: event.target.value })} type="number" /></label>
           <label>Sale rate<input value={form.saleRate} onChange={(event) => setForm({ ...form, saleRate: event.target.value })} type="number" /></label>
