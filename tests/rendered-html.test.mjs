@@ -30,9 +30,9 @@ test("server-renders the ERP product shell", async () => {
 
   const html = await response.text();
   assert.match(html, /<title>BizMitra \| Kirana, Mandi and Trader Business Software<\/title>/i);
+  assert.match(html, /Set up BizMitra for your business/);
   assert.match(html, /Test billing, stock, payments, purchases, and mandi settlement end to end/);
-  assert.match(html, /Business name/);
-  assert.match(html, /Invoice prefix/);
+  assert.match(html, /Continue/);
   assert.match(html, /Sales billing/);
   assert.match(html, /Mandi trade/);
   assert.match(html, /Intro and onboarding/);

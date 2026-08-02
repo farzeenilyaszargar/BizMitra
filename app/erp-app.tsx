@@ -621,6 +621,8 @@ function Onboarding({
   onSave: (form: OnboardingForm) => void;
   onClose: () => void;
 }) {
+  const [step, setStep] = useState(0);
+  const [isClosing, setIsClosing] = useState(false);
   const [form, setForm] = useState<OnboardingForm>({
     name: state.business.name,
     businessType: state.business.businessType,
@@ -636,42 +638,91 @@ function Onboarding({
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onSave(form);
+    if (step < 3) {
+      setStep((current) => current + 1);
+      return;
+    }
+    completeFlow();
+  }
+
+  function closeFlow() {
+    setIsClosing(true);
+    window.setTimeout(onClose, 180);
+  }
+
+  function completeFlow() {
+    setIsClosing(true);
+    window.setTimeout(() => onSave(form), 180);
   }
 
   return (
-    <section className="onboarding-shell" aria-label="Business onboarding">
-      <div className="onboarding-intro">
-        <div className="business-pill">
-          <ShieldCheck size={16} />
-          <span>Intro and onboarding</span>
+    <section className={`onboarding-overlay ${isClosing ? "closing" : ""}`} aria-label="Business onboarding" role="dialog" aria-modal="true">
+      <form className="onboarding-modal" onSubmit={submit}>
+        <div className="onboarding-head">
+          <div>
+            <div className="business-pill">
+              <ShieldCheck size={16} />
+              <span>{step === 0 ? "Intro and onboarding" : `Step ${step} of 3`}</span>
+            </div>
+            <h2>{step === 0 ? "Set up BizMitra for your business" : ["", "Business identity", "GST and location", "Invoice and opening cash"][step]}</h2>
+          </div>
+          {state.onboardingComplete && <button className="icon-button" type="button" onClick={closeFlow} aria-label="Close onboarding">×</button>}
         </div>
-        <h2>Test billing, stock, payments, purchases, and mandi settlement end to end.</h2>
-        <p>
-          First add your business details. BizMitra uses this for invoice prefix, GST fields, owner reports, and future desktop/mobile sync setup.
-        </p>
-        <ol className="setup-list">
-          <li><CheckCircle2 size={18} /> Business identity and owner contact</li>
-          <li><CheckCircle2 size={18} /> GST/state details for invoice setup</li>
-          <li><CheckCircle2 size={18} /> Opening cash and financial year</li>
-        </ol>
-      </div>
-      <form className="onboarding-form" onSubmit={submit}>
-        <div className="form-grid">
-          <label>Business name<input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} autoFocus /></label>
-          <label>Business type<Select value={form.businessType} onChange={(value) => setForm({ ...form, businessType: value })} options={["Kirana", "Mandi trader", "Wholesaler", "Distributor", "Kirana + Wholesale", "Commission agent"].map((type) => [type, type])} /></label>
-          <label>Owner name<input value={form.ownerName} onChange={(event) => setForm({ ...form, ownerName: event.target.value })} /></label>
-          <label>Phone<input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} /></label>
-          <label>GSTIN optional<input value={form.gstin} onChange={(event) => setForm({ ...form, gstin: event.target.value })} maxLength={15} /></label>
-          <label>State<input value={form.state} onChange={(event) => setForm({ ...form, state: event.target.value })} /></label>
-          <label>City<input value={form.city} onChange={(event) => setForm({ ...form, city: event.target.value })} /></label>
-          <label>Invoice prefix<input value={form.invoicePrefix} onChange={(event) => setForm({ ...form, invoicePrefix: event.target.value })} maxLength={6} /></label>
-          <label>Opening cash<input value={form.openingCash} onChange={(event) => setForm({ ...form, openingCash: event.target.value })} type="number" min="0" /></label>
-          <label>Financial year<input value={form.financialYear} onChange={(event) => setForm({ ...form, financialYear: event.target.value })} /></label>
+
+        <div className="onboarding-progress" aria-label="Onboarding progress">
+          {[0, 1, 2, 3].map((dot) => (
+            <span className={dot <= step ? "active" : ""} key={dot} />
+          ))}
         </div>
+
+        <div className="onboarding-body" key={step}>
+          {step === 0 && (
+            <div className="onboarding-intro">
+              <h3>Test billing, stock, payments, purchases, and mandi settlement end to end.</h3>
+              <p>
+                First add your business details. BizMitra uses this for invoice prefix, GST fields, owner reports, and future desktop/mobile sync setup.
+              </p>
+              <ol className="setup-list">
+                <li><CheckCircle2 size={18} /> Business identity and owner contact</li>
+                <li><CheckCircle2 size={18} /> GST/state details for invoice setup</li>
+                <li><CheckCircle2 size={18} /> Opening cash and financial year</li>
+              </ol>
+            </div>
+          )}
+
+          {step === 1 && (
+            <div className="form-grid">
+              <label>Business name<input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} autoFocus /></label>
+              <label>Business type<Select value={form.businessType} onChange={(value) => setForm({ ...form, businessType: value })} options={["Kirana", "Mandi trader", "Wholesaler", "Distributor", "Kirana + Wholesale", "Commission agent"].map((type) => [type, type])} /></label>
+              <label>Owner name<input value={form.ownerName} onChange={(event) => setForm({ ...form, ownerName: event.target.value })} /></label>
+              <label>Phone<input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} /></label>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="form-grid">
+              <label>GSTIN optional<input value={form.gstin} onChange={(event) => setForm({ ...form, gstin: event.target.value })} maxLength={15} /></label>
+              <label>State<input value={form.state} onChange={(event) => setForm({ ...form, state: event.target.value })} /></label>
+              <label>City<input value={form.city} onChange={(event) => setForm({ ...form, city: event.target.value })} /></label>
+              <label>Financial year<input value={form.financialYear} onChange={(event) => setForm({ ...form, financialYear: event.target.value })} /></label>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="form-grid">
+              <label>Invoice prefix<input value={form.invoicePrefix} onChange={(event) => setForm({ ...form, invoicePrefix: event.target.value })} maxLength={6} /></label>
+              <label>Opening cash<input value={form.openingCash} onChange={(event) => setForm({ ...form, openingCash: event.target.value })} type="number" min="0" /></label>
+              <div className="onboarding-summary">
+                <strong>{form.name || "My Business"}</strong>
+                <span>{form.businessType} | {form.city || "City"} | Prefix {(form.invoicePrefix || "BM").toUpperCase()}</span>
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="action-row">
-          <button className="primary-button" type="submit">Save and enter app</button>
-          {state.onboardingComplete && <button className="ghost-button" type="button" onClick={onClose}>Close</button>}
+          {step > 0 && <button className="ghost-button" type="button" onClick={() => setStep((current) => current - 1)}>Back</button>}
+          <button className="primary-button" type="submit">{step < 3 ? "Continue" : "Save and enter app"}</button>
         </div>
       </form>
     </section>
