@@ -126,7 +126,22 @@ type MandiLot = {
   payable: number;
 };
 
+type BusinessProfile = {
+  name: string;
+  businessType: string;
+  ownerName: string;
+  phone: string;
+  gstin: string;
+  state: string;
+  city: string;
+  invoicePrefix: string;
+  openingCash: number;
+  financialYear: string;
+};
+
 type BusinessState = {
+  business: BusinessProfile;
+  onboardingComplete: boolean;
   invoiceSeq: number;
   purchaseSeq: number;
   lotSeq: number;
@@ -195,6 +210,19 @@ type MandiForm = {
   commissionRate: string;
 };
 
+type OnboardingForm = {
+  name: string;
+  businessType: string;
+  ownerName: string;
+  phone: string;
+  gstin: string;
+  state: string;
+  city: string;
+  invoicePrefix: string;
+  openingCash: string;
+  financialYear: string;
+};
+
 const copy = {
   en: {
     app: "BizMitra",
@@ -237,6 +265,19 @@ const modules: Array<{
 ];
 
 const initialState: BusinessState = {
+  onboardingComplete: false,
+  business: {
+    name: "Demo Trading Co.",
+    businessType: "Kirana + Wholesale",
+    ownerName: "Owner",
+    phone: "",
+    gstin: "",
+    state: "Jammu and Kashmir",
+    city: "Srinagar",
+    invoicePrefix: "BM",
+    openingCash: 25000,
+    financialYear: "2026-27",
+  },
   invoiceSeq: 185,
   purchaseSeq: 42,
   lotSeq: 107,
@@ -297,6 +338,25 @@ function getItem(state: BusinessState, itemId: string) {
   return state.items.find((item) => item.id === itemId) ?? state.items[0];
 }
 
+function normalizeState(candidate: Partial<BusinessState>): BusinessState {
+  return {
+    ...initialState,
+    ...candidate,
+    business: {
+      ...initialState.business,
+      ...(candidate.business ?? {}),
+    },
+    onboardingComplete: Boolean(candidate.onboardingComplete),
+    items: candidate.items ?? initialState.items,
+    parties: candidate.parties ?? initialState.parties,
+    invoices: candidate.invoices ?? initialState.invoices,
+    purchases: candidate.purchases ?? initialState.purchases,
+    payments: candidate.payments ?? initialState.payments,
+    mandiLots: candidate.mandiLots ?? initialState.mandiLots,
+    ledger: candidate.ledger ?? initialState.ledger,
+  };
+}
+
 function computeSale(state: BusinessState, form: SaleForm) {
   const item = getItem(state, form.itemId);
   const qty = numberValue(form.qty);
@@ -324,7 +384,7 @@ function loadState(): BusinessState {
   if (typeof window === "undefined") return initialState;
   try {
     const stored = window.localStorage.getItem(storageKey);
-    return stored ? JSON.parse(stored) as BusinessState : initialState;
+    return stored ? normalizeState(JSON.parse(stored) as Partial<BusinessState>) : initialState;
   } catch {
     return initialState;
   }
@@ -339,10 +399,13 @@ export function ErpApp() {
   const [notice, setNotice] = useState("Ready for testing. Try saving a bill, purchase, payment, or mandi lot.");
   const [state, setState] = useState<BusinessState>(initialState);
   const [hydrated, setHydrated] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(true);
 
   useEffect(() => {
     const loadTimer = window.setTimeout(() => {
-      setState(loadState());
+      const loaded = loadState();
+      setState(loaded);
+      setShowOnboarding(!loaded.onboardingComplete);
       setHydrated(true);
     }, 0);
     const syncOnlineStatus = () => setIsOnline(navigator.onLine);
@@ -387,9 +450,33 @@ export function ErpApp() {
   }
 
   function resetDemo() {
-    setState(initialState);
-    window.localStorage.removeItem(storageKey);
+    setState((current) => ({
+      ...initialState,
+      business: current.business,
+      onboardingComplete: current.onboardingComplete,
+    }));
     setNotice("Demo data reset. You can test workflows from a clean sample state.");
+  }
+
+  function saveOnboarding(form: OnboardingForm) {
+    setState((current) => ({
+      ...current,
+      onboardingComplete: true,
+      business: {
+        name: form.name.trim() || "My Business",
+        businessType: form.businessType,
+        ownerName: form.ownerName.trim() || "Owner",
+        phone: form.phone.trim(),
+        gstin: form.gstin.trim().toUpperCase(),
+        state: form.state.trim(),
+        city: form.city.trim(),
+        invoicePrefix: (form.invoicePrefix.trim() || "BM").toUpperCase(),
+        openingCash: numberValue(form.openingCash),
+        financialYear: form.financialYear.trim() || "2026-27",
+      },
+    }));
+    setShowOnboarding(false);
+    setNotice("Business profile saved. Your billing prefix, GST details, and owner view are ready.");
   }
 
   return (
@@ -465,6 +552,10 @@ export function ErpApp() {
                 <RotateCcw size={17} />
                 <span>Reset</span>
               </button>
+              <button className="ghost-button" type="button" onClick={() => setShowOnboarding(true)}>
+                <Store size={17} />
+                <span>Business</span>
+              </button>
               <button className="icon-button" type="button" aria-label="Notifications">
                 <Bell size={19} />
               </button>
@@ -480,11 +571,11 @@ export function ErpApp() {
             <div className="hero-copy">
               <div className="business-pill">
                 <ShieldCheck size={16} />
-                <span>Desktop-first ERP with local test workflows</span>
+                <span>{state.business.businessType} | {state.business.city || "Your city"}</span>
               </div>
-              <h1>Test billing, stock, payments, purchases, and mandi settlement end to end.</h1>
+              <h1>{state.business.name}</h1>
               <p>
-                Every save updates stock, party balances, ledgers, reports, and the local sync queue so you can evaluate real business flows.
+                Owner: {state.business.ownerName} | GSTIN: {state.business.gstin || "Not added"} | Invoice prefix: {state.business.invoicePrefix}
               </p>
             </div>
             <div className="quick-actions" aria-label="Quick actions">
@@ -503,6 +594,8 @@ export function ErpApp() {
             </div>
           </section>
 
+          {showOnboarding && <Onboarding state={state} onSave={saveOnboarding} onClose={() => setShowOnboarding(false)} />}
+
           <p className="notice">{notice}</p>
 
           {active === "dashboard" && <Dashboard state={state} language={language} />}
@@ -519,9 +612,75 @@ export function ErpApp() {
   );
 }
 
+function Onboarding({
+  state,
+  onSave,
+  onClose,
+}: {
+  state: BusinessState;
+  onSave: (form: OnboardingForm) => void;
+  onClose: () => void;
+}) {
+  const [form, setForm] = useState<OnboardingForm>({
+    name: state.business.name,
+    businessType: state.business.businessType,
+    ownerName: state.business.ownerName,
+    phone: state.business.phone,
+    gstin: state.business.gstin,
+    state: state.business.state,
+    city: state.business.city,
+    invoicePrefix: state.business.invoicePrefix,
+    openingCash: String(state.business.openingCash),
+    financialYear: state.business.financialYear,
+  });
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    onSave(form);
+  }
+
+  return (
+    <section className="onboarding-shell" aria-label="Business onboarding">
+      <div className="onboarding-intro">
+        <div className="business-pill">
+          <ShieldCheck size={16} />
+          <span>Intro and onboarding</span>
+        </div>
+        <h2>Test billing, stock, payments, purchases, and mandi settlement end to end.</h2>
+        <p>
+          First add your business details. BizMitra uses this for invoice prefix, GST fields, owner reports, and future desktop/mobile sync setup.
+        </p>
+        <ol className="setup-list">
+          <li><CheckCircle2 size={18} /> Business identity and owner contact</li>
+          <li><CheckCircle2 size={18} /> GST/state details for invoice setup</li>
+          <li><CheckCircle2 size={18} /> Opening cash and financial year</li>
+        </ol>
+      </div>
+      <form className="onboarding-form" onSubmit={submit}>
+        <div className="form-grid">
+          <label>Business name<input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} autoFocus /></label>
+          <label>Business type<Select value={form.businessType} onChange={(value) => setForm({ ...form, businessType: value })} options={["Kirana", "Mandi trader", "Wholesaler", "Distributor", "Kirana + Wholesale", "Commission agent"].map((type) => [type, type])} /></label>
+          <label>Owner name<input value={form.ownerName} onChange={(event) => setForm({ ...form, ownerName: event.target.value })} /></label>
+          <label>Phone<input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} /></label>
+          <label>GSTIN optional<input value={form.gstin} onChange={(event) => setForm({ ...form, gstin: event.target.value })} maxLength={15} /></label>
+          <label>State<input value={form.state} onChange={(event) => setForm({ ...form, state: event.target.value })} /></label>
+          <label>City<input value={form.city} onChange={(event) => setForm({ ...form, city: event.target.value })} /></label>
+          <label>Invoice prefix<input value={form.invoicePrefix} onChange={(event) => setForm({ ...form, invoicePrefix: event.target.value })} maxLength={6} /></label>
+          <label>Opening cash<input value={form.openingCash} onChange={(event) => setForm({ ...form, openingCash: event.target.value })} type="number" min="0" /></label>
+          <label>Financial year<input value={form.financialYear} onChange={(event) => setForm({ ...form, financialYear: event.target.value })} /></label>
+        </div>
+        <div className="action-row">
+          <button className="primary-button" type="submit">Save and enter app</button>
+          {state.onboardingComplete && <button className="ghost-button" type="button" onClick={onClose}>Close</button>}
+        </div>
+      </form>
+    </section>
+  );
+}
+
 function Dashboard({ state, language }: { state: BusinessState; language: Language }) {
   const todaySales = state.invoices.reduce((sum, invoice) => sum + invoice.total, 0);
-  const cash = state.payments.filter((payment) => payment.mode === "Cash").reduce((sum, payment) => sum + payment.amount, 0);
+  const cash = state.business.openingCash + state.payments.filter((payment) => payment.mode === "Cash").reduce((sum, payment) => sum + payment.amount, 0);
   const receivable = state.parties.filter((party) => party.balance > 0).reduce((sum, party) => sum + party.balance, 0);
   const lowStock = state.items.filter((item) => item.stock <= item.lowStock).length;
   const metrics = [
@@ -547,7 +706,7 @@ function Dashboard({ state, language }: { state: BusinessState; language: Langua
           <StatusLine label="Sales bills" value={`${state.invoices.length}`} />
           <StatusLine label="Purchase bills" value={`${state.purchases.length}`} />
           <StatusLine label="Mandi lots" value={`${state.mandiLots.length}`} />
-          <StatusLine label="Ledger entries" value={`${state.ledger.length}`} />
+          <StatusLine label="Financial year" value={state.business.financialYear} />
         </div>
       </section>
       <section className="panel">
@@ -589,7 +748,7 @@ function Billing({ state, mutate }: { state: BusinessState; mutate: (updater: (c
       return;
     }
     mutate((current) => {
-      const invoiceNo = `BM-${String(current.invoiceSeq).padStart(5, "0")}`;
+      const invoiceNo = `${current.business.invoicePrefix}-${String(current.invoiceSeq).padStart(5, "0")}`;
       const invoice: Invoice = {
         id: id("inv"),
         no: invoiceNo,
@@ -642,7 +801,7 @@ function Billing({ state, mutate }: { state: BusinessState; mutate: (updater: (c
         </div>
       </form>
       <aside className="panel bill-summary">
-        <PanelHeader icon={FileText} title="Invoice total" action={`Next ${`BM-${String(state.invoiceSeq).padStart(5, "0")}`}`} />
+        <PanelHeader icon={FileText} title="Invoice total" action={`Next ${`${state.business.invoicePrefix}-${String(state.invoiceSeq).padStart(5, "0")}`}`} />
         <StatusLine label="Subtotal" value={money(estimate.subtotal)} />
         <StatusLine label="GST" value={money(estimate.gst)} />
         <StatusLine label="Discount" value={money(estimate.discount)} />
