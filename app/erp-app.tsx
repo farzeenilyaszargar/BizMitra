@@ -20,6 +20,7 @@ import {
   ReceiptText,
   RotateCcw,
   Search,
+  Settings,
   ShieldCheck,
   ShoppingCart,
   Store,
@@ -38,7 +39,8 @@ type ModuleKey =
   | "purchases"
   | "payments"
   | "mandi"
-  | "reports";
+  | "reports"
+  | "settings";
 type PartyType = "Customer" | "Supplier" | "Farmer" | "Buyer";
 type PaymentMode = "Cash" | "UPI" | "Bank";
 
@@ -264,6 +266,8 @@ const modules: Array<{
   { key: "reports", label: "Reports", hi: "रिपोर्ट", icon: BarChart3 },
 ];
 
+const settingsModule = { key: "settings" as const, label: "Settings", hi: "सेटिंग्स", icon: Settings };
+
 const initialState: BusinessState = {
   onboardingComplete: false,
   business: {
@@ -288,6 +292,14 @@ const initialState: BusinessState = {
     { id: "item-salt", name: "Tata Salt 1kg", unit: "pkt", hsn: "2501", stock: 180, lowStock: 80, saleRate: 24, purchaseRate: 21, gstRate: 0 },
     { id: "item-onion", name: "Onion Nasik", unit: "crate", hsn: "0703", stock: 92, lowStock: 60, saleRate: 740, purchaseRate: 690, gstRate: 0 },
     { id: "item-potato", name: "Potato Agra", unit: "qtl", hsn: "0701", stock: 42.5, lowStock: 20, saleRate: 1260, purchaseRate: 1190, gstRate: 0 },
+    { id: "item-atta", name: "Aashirvaad Atta 10kg", unit: "bag", hsn: "1101", stock: 64, lowStock: 25, saleRate: 425, purchaseRate: 382, gstRate: 5 },
+    { id: "item-dal", name: "Toor Dal Premium 30kg", unit: "bag", hsn: "0713", stock: 22, lowStock: 12, saleRate: 4380, purchaseRate: 4050, gstRate: 5 },
+    { id: "item-tea", name: "Tata Tea Gold 1kg", unit: "pkt", hsn: "0902", stock: 48, lowStock: 20, saleRate: 520, purchaseRate: 470, gstRate: 5 },
+    { id: "item-biscuit", name: "Parle-G Family Pack", unit: "case", hsn: "1905", stock: 36, lowStock: 18, saleRate: 780, purchaseRate: 710, gstRate: 18 },
+    { id: "item-tomato", name: "Tomato Himachal", unit: "crate", hsn: "0702", stock: 58, lowStock: 30, saleRate: 620, purchaseRate: 560, gstRate: 0 },
+    { id: "item-apple", name: "Apple Delicious", unit: "box", hsn: "0808", stock: 19, lowStock: 10, saleRate: 1850, purchaseRate: 1680, gstRate: 0 },
+    { id: "item-wheat", name: "Wheat Lokwan", unit: "qtl", hsn: "1001", stock: 76, lowStock: 35, saleRate: 2410, purchaseRate: 2260, gstRate: 0 },
+    { id: "item-jaggery", name: "Kolhapuri Jaggery 10kg", unit: "box", hsn: "1702", stock: 28, lowStock: 15, saleRate: 540, purchaseRate: 485, gstRate: 5 },
   ],
   parties: [
     { id: "party-sharma", name: "Sharma Kirana Store", type: "Customer", phone: "9876501111", creditLimit: 150000, balance: 86420 },
@@ -339,6 +351,9 @@ function getItem(state: BusinessState, itemId: string) {
 }
 
 function normalizeState(candidate: Partial<BusinessState>): BusinessState {
+  const candidateItems = candidate.items ?? initialState.items;
+  const missingDemoItems = initialState.items.filter((item) => !candidateItems.some((candidateItem) => candidateItem.id === item.id));
+
   return {
     ...initialState,
     ...candidate,
@@ -347,7 +362,7 @@ function normalizeState(candidate: Partial<BusinessState>): BusinessState {
       ...(candidate.business ?? {}),
     },
     onboardingComplete: Boolean(candidate.onboardingComplete),
-    items: candidate.items ?? initialState.items,
+    items: [...candidateItems, ...missingDemoItems],
     parties: candidate.parties ?? initialState.parties,
     invoices: candidate.invoices ?? initialState.invoices,
     purchases: candidate.purchases ?? initialState.purchases,
@@ -431,7 +446,7 @@ export function ErpApp() {
   }, [hydrated, state]);
 
   const t = copy[language];
-  const activeModule = modules.find((module) => module.key === active) ?? modules[0];
+  const activeModule = [...modules, settingsModule].find((module) => module.key === active) ?? modules[0];
   const ActiveModuleIcon = activeModule.icon;
 
   const searchResults = useMemo(() => {
@@ -513,11 +528,24 @@ export function ErpApp() {
             })}
           </nav>
 
-          <div className="sync-card">
-            <Cloud size={18} />
-            <div>
-              <strong>{isOnline ? t.online : t.offline}</strong>
-              <span>Local queue: {state.syncQueue} saved actions</span>
+          <div className="sidebar-footer">
+            <button
+              className={`module-button settings-button ${active === "settings" ? "active" : ""}`}
+              onClick={() => {
+                setActive("settings");
+                setSidebarOpen(false);
+              }}
+              type="button"
+            >
+              <Settings size={18} />
+              <span>{language === "hi" ? settingsModule.hi : settingsModule.label}</span>
+            </button>
+            <div className="sync-card">
+              <Cloud size={18} />
+              <div>
+                <strong>{isOnline ? t.online : t.offline}</strong>
+                <span>Local queue: {state.syncQueue} saved actions</span>
+              </div>
             </div>
           </div>
         </aside>
@@ -606,6 +634,7 @@ export function ErpApp() {
           {active === "payments" && <Payments state={state} mutate={mutate} />}
           {active === "mandi" && <Mandi state={state} mutate={mutate} />}
           {active === "reports" && <Reports state={state} />}
+          {active === "settings" && <SettingsView state={state} onEditBusiness={() => setShowOnboarding(true)} onResetDemo={resetDemo} />}
         </section>
       </div>
     </main>
@@ -1129,6 +1158,42 @@ function Reports({ state }: { state: BusinessState }) {
       <div className="panel">
         <PanelHeader icon={FileText} title="Audit ledger" action={`${state.ledger.length} entries`} />
         <DataTable columns={["Type", "Description", "Dr", "Cr"]} rows={state.ledger.slice(0, 8).map((row) => [row.type, row.description, money(row.debit), money(row.credit)])} />
+      </div>
+    </section>
+  );
+}
+
+function SettingsView({
+  state,
+  onEditBusiness,
+  onResetDemo,
+}: {
+  state: BusinessState;
+  onEditBusiness: () => void;
+  onResetDemo: () => void;
+}) {
+  return (
+    <section className="workspace-grid">
+      <div className="panel wide">
+        <PanelHeader icon={Settings} title="Settings" action="Business profile" />
+        <div className="owner-grid">
+          <StatusLine label="Business name" value={state.business.name} />
+          <StatusLine label="Business type" value={state.business.businessType} />
+          <StatusLine label="Owner" value={state.business.ownerName} />
+          <StatusLine label="Invoice prefix" value={state.business.invoicePrefix} />
+          <StatusLine label="GSTIN" value={state.business.gstin || "Not added"} />
+          <StatusLine label="Financial year" value={state.business.financialYear} />
+        </div>
+        <div className="action-row">
+          <button className="primary-button" type="button" onClick={onEditBusiness}>Edit business setup</button>
+          <button className="ghost-button" type="button" onClick={onResetDemo}>Reset demo transactions</button>
+        </div>
+      </div>
+      <div className="panel">
+        <PanelHeader icon={Boxes} title="Demo data" action={`${state.items.length} items`} />
+        <p className="muted">
+          Demo items include kirana stock, mandi crops, GST goods, and wholesale units so you can test billing, purchases, and stock alerts.
+        </p>
       </div>
     </section>
   );
