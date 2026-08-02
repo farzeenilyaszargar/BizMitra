@@ -626,6 +626,27 @@ button {
   width: 18px;
 }
 
+.gst-autofill-card,
+.source-note {
+  background: #eef6f3;
+  border: 1px solid #cfe2dc;
+  border-radius: 8px;
+  color: #0f3f39;
+  padding: 10px 12px;
+}
+
+.gst-autofill-card {
+  display: grid;
+  gap: 4px;
+}
+
+.gst-autofill-card span,
+.source-note {
+  color: #64748b;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
 .mini-form {
   display: grid;
   gap: 12px;

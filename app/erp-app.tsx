@@ -28,7 +28,7 @@ import {
   Users,
   Wifi,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 
 type Language = "en" | "hi";
 type ModuleKey =
@@ -54,6 +54,7 @@ type Item = {
   saleRate: number;
   purchaseRate: number;
   gstRate: number;
+  gstSource: string;
 };
 
 type Party = {
@@ -183,6 +184,7 @@ type PaymentForm = {
 };
 
 type ItemForm = {
+  catalogSearch: string;
   name: string;
   unit: string;
   hsn: string;
@@ -191,6 +193,16 @@ type ItemForm = {
   saleRate: string;
   purchaseRate: string;
   gstRate: string;
+};
+
+type GstCatalogItem = {
+  name: string;
+  aliases: string[];
+  unit: string;
+  hsn: string;
+  gstRate: number;
+  saleRate: number;
+  purchaseRate: number;
 };
 
 type PartyForm = {
@@ -268,6 +280,27 @@ const modules: Array<{
 
 const settingsModule = { key: "settings" as const, label: "Settings", hi: "सेटिंग्स", icon: Settings };
 
+const gstCatalogSource = "Official GST goods rate reference: CBIC GST Rates of Goods portal";
+
+const gstCatalog: GstCatalogItem[] = [
+  { name: "Basmati rice", aliases: ["rice", "basmati", "india gate rice"], unit: "bag", hsn: "1006", gstRate: 5, saleRate: 2480, purchaseRate: 2210 },
+  { name: "Edible oil", aliases: ["oil", "fortune oil", "mustard oil", "refined oil"], unit: "tin", hsn: "1514", gstRate: 5, saleRate: 1625, purchaseRate: 1490 },
+  { name: "Common salt", aliases: ["salt", "tata salt"], unit: "pkt", hsn: "2501", gstRate: 0, saleRate: 24, purchaseRate: 21 },
+  { name: "Onion", aliases: ["onion", "nasik onion"], unit: "crate", hsn: "0703", gstRate: 0, saleRate: 740, purchaseRate: 690 },
+  { name: "Potato", aliases: ["potato", "agra potato"], unit: "qtl", hsn: "0701", gstRate: 0, saleRate: 1260, purchaseRate: 1190 },
+  { name: "Wheat flour / atta", aliases: ["atta", "aashirvaad", "wheat flour"], unit: "bag", hsn: "1101", gstRate: 5, saleRate: 425, purchaseRate: 382 },
+  { name: "Pulses / dal", aliases: ["dal", "toor dal", "pulses", "arhar"], unit: "bag", hsn: "0713", gstRate: 5, saleRate: 4380, purchaseRate: 4050 },
+  { name: "Tea", aliases: ["tea", "tata tea", "tea gold"], unit: "pkt", hsn: "0902", gstRate: 5, saleRate: 520, purchaseRate: 470 },
+  { name: "Biscuits", aliases: ["biscuit", "parle", "parle-g"], unit: "case", hsn: "1905", gstRate: 18, saleRate: 780, purchaseRate: 710 },
+  { name: "Tomato", aliases: ["tomato"], unit: "crate", hsn: "0702", gstRate: 0, saleRate: 620, purchaseRate: 560 },
+  { name: "Apple", aliases: ["apple", "delicious apple"], unit: "box", hsn: "0808", gstRate: 0, saleRate: 1850, purchaseRate: 1680 },
+  { name: "Wheat grain", aliases: ["wheat", "lokwan"], unit: "qtl", hsn: "1001", gstRate: 0, saleRate: 2410, purchaseRate: 2260 },
+  { name: "Jaggery", aliases: ["jaggery", "gur"], unit: "box", hsn: "1702", gstRate: 5, saleRate: 540, purchaseRate: 485 },
+  { name: "Sugar", aliases: ["sugar", "m30 sugar"], unit: "qtl", hsn: "1701", gstRate: 5, saleRate: 4280, purchaseRate: 4010 },
+  { name: "Soap", aliases: ["soap", "bathing soap"], unit: "case", hsn: "3401", gstRate: 18, saleRate: 920, purchaseRate: 815 },
+  { name: "Detergent powder", aliases: ["detergent", "washing powder"], unit: "bag", hsn: "3402", gstRate: 18, saleRate: 1180, purchaseRate: 1060 },
+];
+
 const initialState: BusinessState = {
   onboardingComplete: false,
   business: {
@@ -287,19 +320,19 @@ const initialState: BusinessState = {
   lotSeq: 107,
   syncQueue: 0,
   items: [
-    { id: "item-rice", name: "India Gate Basmati 25kg", unit: "bag", hsn: "1006", stock: 38, lowStock: 20, saleRate: 2480, purchaseRate: 2210, gstRate: 5 },
-    { id: "item-oil", name: "Fortune Oil 15L", unit: "tin", hsn: "1514", stock: 14, lowStock: 24, saleRate: 1625, purchaseRate: 1490, gstRate: 5 },
-    { id: "item-salt", name: "Tata Salt 1kg", unit: "pkt", hsn: "2501", stock: 180, lowStock: 80, saleRate: 24, purchaseRate: 21, gstRate: 0 },
-    { id: "item-onion", name: "Onion Nasik", unit: "crate", hsn: "0703", stock: 92, lowStock: 60, saleRate: 740, purchaseRate: 690, gstRate: 0 },
-    { id: "item-potato", name: "Potato Agra", unit: "qtl", hsn: "0701", stock: 42.5, lowStock: 20, saleRate: 1260, purchaseRate: 1190, gstRate: 0 },
-    { id: "item-atta", name: "Aashirvaad Atta 10kg", unit: "bag", hsn: "1101", stock: 64, lowStock: 25, saleRate: 425, purchaseRate: 382, gstRate: 5 },
-    { id: "item-dal", name: "Toor Dal Premium 30kg", unit: "bag", hsn: "0713", stock: 22, lowStock: 12, saleRate: 4380, purchaseRate: 4050, gstRate: 5 },
-    { id: "item-tea", name: "Tata Tea Gold 1kg", unit: "pkt", hsn: "0902", stock: 48, lowStock: 20, saleRate: 520, purchaseRate: 470, gstRate: 5 },
-    { id: "item-biscuit", name: "Parle-G Family Pack", unit: "case", hsn: "1905", stock: 36, lowStock: 18, saleRate: 780, purchaseRate: 710, gstRate: 18 },
-    { id: "item-tomato", name: "Tomato Himachal", unit: "crate", hsn: "0702", stock: 58, lowStock: 30, saleRate: 620, purchaseRate: 560, gstRate: 0 },
-    { id: "item-apple", name: "Apple Delicious", unit: "box", hsn: "0808", stock: 19, lowStock: 10, saleRate: 1850, purchaseRate: 1680, gstRate: 0 },
-    { id: "item-wheat", name: "Wheat Lokwan", unit: "qtl", hsn: "1001", stock: 76, lowStock: 35, saleRate: 2410, purchaseRate: 2260, gstRate: 0 },
-    { id: "item-jaggery", name: "Kolhapuri Jaggery 10kg", unit: "box", hsn: "1702", stock: 28, lowStock: 15, saleRate: 540, purchaseRate: 485, gstRate: 5 },
+    { id: "item-rice", name: "India Gate Basmati 25kg", unit: "bag", hsn: "1006", stock: 38, lowStock: 20, saleRate: 2480, purchaseRate: 2210, gstRate: 5, gstSource: gstCatalogSource },
+    { id: "item-oil", name: "Fortune Oil 15L", unit: "tin", hsn: "1514", stock: 14, lowStock: 24, saleRate: 1625, purchaseRate: 1490, gstRate: 5, gstSource: gstCatalogSource },
+    { id: "item-salt", name: "Tata Salt 1kg", unit: "pkt", hsn: "2501", stock: 180, lowStock: 80, saleRate: 24, purchaseRate: 21, gstRate: 0, gstSource: gstCatalogSource },
+    { id: "item-onion", name: "Onion Nasik", unit: "crate", hsn: "0703", stock: 92, lowStock: 60, saleRate: 740, purchaseRate: 690, gstRate: 0, gstSource: gstCatalogSource },
+    { id: "item-potato", name: "Potato Agra", unit: "qtl", hsn: "0701", stock: 42.5, lowStock: 20, saleRate: 1260, purchaseRate: 1190, gstRate: 0, gstSource: gstCatalogSource },
+    { id: "item-atta", name: "Aashirvaad Atta 10kg", unit: "bag", hsn: "1101", stock: 64, lowStock: 25, saleRate: 425, purchaseRate: 382, gstRate: 5, gstSource: gstCatalogSource },
+    { id: "item-dal", name: "Toor Dal Premium 30kg", unit: "bag", hsn: "0713", stock: 22, lowStock: 12, saleRate: 4380, purchaseRate: 4050, gstRate: 5, gstSource: gstCatalogSource },
+    { id: "item-tea", name: "Tata Tea Gold 1kg", unit: "pkt", hsn: "0902", stock: 48, lowStock: 20, saleRate: 520, purchaseRate: 470, gstRate: 5, gstSource: gstCatalogSource },
+    { id: "item-biscuit", name: "Parle-G Family Pack", unit: "case", hsn: "1905", stock: 36, lowStock: 18, saleRate: 780, purchaseRate: 710, gstRate: 18, gstSource: gstCatalogSource },
+    { id: "item-tomato", name: "Tomato Himachal", unit: "crate", hsn: "0702", stock: 58, lowStock: 30, saleRate: 620, purchaseRate: 560, gstRate: 0, gstSource: gstCatalogSource },
+    { id: "item-apple", name: "Apple Delicious", unit: "box", hsn: "0808", stock: 19, lowStock: 10, saleRate: 1850, purchaseRate: 1680, gstRate: 0, gstSource: gstCatalogSource },
+    { id: "item-wheat", name: "Wheat Lokwan", unit: "qtl", hsn: "1001", stock: 76, lowStock: 35, saleRate: 2410, purchaseRate: 2260, gstRate: 0, gstSource: gstCatalogSource },
+    { id: "item-jaggery", name: "Kolhapuri Jaggery 10kg", unit: "box", hsn: "1702", stock: 28, lowStock: 15, saleRate: 540, purchaseRate: 485, gstRate: 5, gstSource: gstCatalogSource },
   ],
   parties: [
     { id: "party-sharma", name: "Sharma Kirana Store", type: "Customer", phone: "9876501111", creditLimit: 150000, balance: 86420 },
@@ -350,9 +383,36 @@ function getItem(state: BusinessState, itemId: string) {
   return state.items.find((item) => item.id === itemId) ?? state.items[0];
 }
 
+function findCatalogItem(value: string) {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return null;
+  return gstCatalog.find((catalogItem) =>
+    [catalogItem.name, catalogItem.hsn, ...catalogItem.aliases].some((candidate) =>
+      candidate.toLowerCase() === normalized || candidate.toLowerCase().includes(normalized),
+    ),
+  ) ?? null;
+}
+
+function applyCatalogToItemForm(current: ItemForm, catalogItem: GstCatalogItem): ItemForm {
+  return {
+    ...current,
+    catalogSearch: catalogItem.name,
+    name: catalogItem.name,
+    unit: catalogItem.unit,
+    hsn: catalogItem.hsn,
+    saleRate: String(catalogItem.saleRate),
+    purchaseRate: String(catalogItem.purchaseRate),
+    gstRate: String(catalogItem.gstRate),
+  };
+}
+
 function normalizeState(candidate: Partial<BusinessState>): BusinessState {
   const candidateItems = candidate.items ?? initialState.items;
   const missingDemoItems = initialState.items.filter((item) => !candidateItems.some((candidateItem) => candidateItem.id === item.id));
+  const normalizedItems = [...candidateItems, ...missingDemoItems].map((item) => ({
+    ...item,
+    gstSource: item.gstSource ?? gstCatalogSource,
+  }));
 
   return {
     ...initialState,
@@ -362,7 +422,7 @@ function normalizeState(candidate: Partial<BusinessState>): BusinessState {
       ...(candidate.business ?? {}),
     },
     onboardingComplete: Boolean(candidate.onboardingComplete),
-    items: [...candidateItems, ...missingDemoItems],
+    items: normalizedItems,
     parties: candidate.parties ?? initialState.parties,
     invoices: candidate.invoices ?? initialState.invoices,
     purchases: candidate.purchases ?? initialState.purchases,
@@ -378,7 +438,7 @@ function computeSale(state: BusinessState, form: SaleForm) {
   const rate = numberValue(form.rate);
   const discount = numberValue(form.discount);
   const subtotal = qty * rate;
-  const gstRate = form.gstBill ? item.gstRate : 0;
+  const gstRate = item.gstRate;
   const gst = Math.round(((subtotal - discount) * gstRate) / 100);
   const total = Math.max(0, subtotal - discount + gst);
   return { item, qty, rate, discount, gstRate, subtotal, gst, total };
@@ -865,15 +925,18 @@ function Billing({ state, mutate }: { state: BusinessState; mutate: (updater: (c
         <PanelHeader icon={ShoppingCart} title="Quick sales bill" action="Updates stock + ledger" />
         <div className="form-grid">
           <label>Customer<Select value={form.partyId} onChange={(value) => setForm({ ...form, partyId: value })} options={state.parties.filter((party) => party.type === "Customer" || party.type === "Buyer").map((party) => [party.id, party.name])} /></label>
-          <label>Item<Select value={form.itemId} onChange={(value) => {
+          <label>Item<SearchableSelect value={form.itemId} onChange={(value) => {
             const item = getItem(state, value);
-            setForm({ ...form, itemId: value, rate: String(item.saleRate), gstBill: item.gstRate > 0 });
+            setForm({ ...form, itemId: value, rate: String(item.saleRate), gstBill: true });
           }} options={state.items.map((item) => [item.id, `${item.name} (${item.stock} ${item.unit})`])} /></label>
           <label>Quantity<input value={form.qty} onChange={(event) => setForm({ ...form, qty: event.target.value })} type="number" min="0" step="0.01" /></label>
           <label>Rate<input value={form.rate} onChange={(event) => setForm({ ...form, rate: event.target.value })} type="number" min="0" /></label>
           <label>Discount<input value={form.discount} onChange={(event) => setForm({ ...form, discount: event.target.value })} type="number" min="0" /></label>
           <label>Payment<Select value={form.paymentMode} onChange={(value) => setForm({ ...form, paymentMode: value as SaleForm["paymentMode"] })} options={["Credit", "Cash", "UPI", "Bank"].map((mode) => [mode, mode])} /></label>
-          <label className="toggle-row">GST bill<input checked={form.gstBill} onChange={(event) => setForm({ ...form, gstBill: event.target.checked })} type="checkbox" /></label>
+          <div className="gst-autofill-card">
+            <strong>HSN {estimate.item.hsn} | GST {estimate.gstRate}%</strong>
+            <span>{estimate.item.gstSource}</span>
+          </div>
         </div>
         <div className="action-row">
           <button className="primary-button" type="submit"><Plus size={17} />Save bill</button>
@@ -900,7 +963,7 @@ function Billing({ state, mutate }: { state: BusinessState; mutate: (updater: (c
 }
 
 function Inventory({ state, mutate }: { state: BusinessState; mutate: (updater: (current: BusinessState) => BusinessState, message: string) => void }) {
-  const [form, setForm] = useState<ItemForm>({ name: "", unit: "pcs", hsn: "", stock: "0", lowStock: "5", saleRate: "0", purchaseRate: "0", gstRate: "0" });
+  const [form, setForm] = useState<ItemForm>({ catalogSearch: "", name: "", unit: "pcs", hsn: "", stock: "0", lowStock: "5", saleRate: "0", purchaseRate: "0", gstRate: "0" });
   function addItem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!form.name.trim()) return;
@@ -916,29 +979,43 @@ function Inventory({ state, mutate }: { state: BusinessState; mutate: (updater: 
         saleRate: numberValue(form.saleRate),
         purchaseRate: numberValue(form.purchaseRate),
         gstRate: numberValue(form.gstRate),
+        gstSource: gstCatalogSource,
       }, ...current.items],
       ledger: [{ id: id("led"), at: today(), type: "Item", description: `Added item ${form.name.trim()}`, debit: 0, credit: 0 }, ...current.ledger],
     }), `Added item ${form.name}.`);
-    setForm({ name: "", unit: "pcs", hsn: "", stock: "0", lowStock: "5", saleRate: "0", purchaseRate: "0", gstRate: "0" });
+    setForm({ catalogSearch: "", name: "", unit: "pcs", hsn: "", stock: "0", lowStock: "5", saleRate: "0", purchaseRate: "0", gstRate: "0" });
+  }
+  function updateCatalogSearch(value: string) {
+    const catalogItem = findCatalogItem(value);
+    setForm(catalogItem ? applyCatalogToItemForm(form, catalogItem) : { ...form, catalogSearch: value });
   }
   return (
     <section className="workspace-grid">
       <div className="panel wide">
         <PanelHeader icon={Boxes} title="Inventory and stock ledger" action="Live reorder alerts" />
         <DataTable
-          columns={["Item", "Stock", "Reorder", "Sale rate", "HSN"]}
-          rows={state.items.map((row) => [row.name, `${row.stock} ${row.unit}`, row.stock <= row.lowStock ? `Low: ${row.lowStock}` : `${row.lowStock}`, money(row.saleRate), row.hsn])}
+          columns={["Item", "Stock", "Reorder", "Sale rate", "HSN/GST"]}
+          rows={state.items.map((row) => [row.name, `${row.stock} ${row.unit}`, row.stock <= row.lowStock ? `Low: ${row.lowStock}` : `${row.lowStock}`, money(row.saleRate), `${row.hsn} | ${row.gstRate}%`])}
         />
       </div>
       <form className="panel" onSubmit={addItem}>
-        <PanelHeader icon={PackagePlus} title="Add item" action="Creates stock master" />
+        <PanelHeader icon={PackagePlus} title="Add item" action="HSN + GST autofill" />
         <div className="mini-form">
+          <label>Search official item<input list="gst-catalog" value={form.catalogSearch} onChange={(event) => updateCatalogSearch(event.target.value)} placeholder="Type rice, atta, soap, onion..." /></label>
+          <datalist id="gst-catalog">
+            {gstCatalog.map((item) => (
+              <option value={item.name} key={item.name}>{`HSN ${item.hsn} | GST ${item.gstRate}%`}</option>
+            ))}
+          </datalist>
           <label>Name<input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>
           <label>Unit<input value={form.unit} onChange={(event) => setForm({ ...form, unit: event.target.value })} /></label>
           <label>HSN<input value={form.hsn} onChange={(event) => setForm({ ...form, hsn: event.target.value })} /></label>
+          <label>GST %<input value={form.gstRate} onChange={(event) => setForm({ ...form, gstRate: event.target.value })} type="number" /></label>
           <label>Opening stock<input value={form.stock} onChange={(event) => setForm({ ...form, stock: event.target.value })} type="number" /></label>
           <label>Low stock<input value={form.lowStock} onChange={(event) => setForm({ ...form, lowStock: event.target.value })} type="number" /></label>
           <label>Sale rate<input value={form.saleRate} onChange={(event) => setForm({ ...form, saleRate: event.target.value })} type="number" /></label>
+          <label>Purchase rate<input value={form.purchaseRate} onChange={(event) => setForm({ ...form, purchaseRate: event.target.value })} type="number" /></label>
+          <p className="source-note">{gstCatalogSource}. Verify exact item conditions before statutory filing.</p>
           <button className="primary-button" type="submit">Add item</button>
         </div>
       </form>
@@ -1022,7 +1099,7 @@ function Purchases({ state, mutate }: { state: BusinessState; mutate: (updater: 
         <PanelHeader icon={PackagePlus} title="Supplier purchase entry" action="Updates stock + payable" />
         <div className="form-grid">
           <label>Supplier<Select value={form.partyId} onChange={(value) => setForm({ ...form, partyId: value })} options={state.parties.filter((party) => party.type === "Supplier").map((party) => [party.id, party.name])} /></label>
-          <label>Item<Select value={form.itemId} onChange={(value) => setForm({ ...form, itemId: value, rate: String(getItem(state, value).purchaseRate) })} options={state.items.map((row) => [row.id, row.name])} /></label>
+          <label>Item<SearchableSelect value={form.itemId} onChange={(value) => setForm({ ...form, itemId: value, rate: String(getItem(state, value).purchaseRate) })} options={state.items.map((row) => [row.id, `${row.name} | HSN ${row.hsn} | GST ${row.gstRate}%`])} /></label>
           <label>Quantity<input value={form.qty} onChange={(event) => setForm({ ...form, qty: event.target.value })} type="number" step="0.01" /></label>
           <label>Rate<input value={form.rate} onChange={(event) => setForm({ ...form, rate: event.target.value })} type="number" /></label>
           <label>Freight / extra charges<input value={form.freight} onChange={(event) => setForm({ ...form, freight: event.target.value })} type="number" /></label>
@@ -1227,6 +1304,36 @@ function Select({ value, options, onChange }: { value: string; options: string[]
         <option value={optionValue} key={optionValue}>{label}</option>
       ))}
     </select>
+  );
+}
+
+function SearchableSelect({ value, options, onChange }: { value: string; options: string[][]; onChange: (value: string) => void }) {
+  const selected = options.find(([optionValue]) => optionValue === value);
+  const [text, setText] = useState(selected?.[1] ?? "");
+  const listId = useId();
+
+  function choose(nextText: string) {
+    setText(nextText);
+    const exact = options.find(([, label]) => label.toLowerCase() === nextText.toLowerCase());
+    if (exact) {
+      onChange(exact[0]);
+      return;
+    }
+    const partial = options.find(([, label]) => label.toLowerCase().includes(nextText.toLowerCase()));
+    if (partial && nextText.length > 2) {
+      onChange(partial[0]);
+    }
+  }
+
+  return (
+    <>
+      <input list={listId} value={text} onChange={(event) => choose(event.target.value)} placeholder="Search item..." />
+      <datalist id={listId}>
+        {options.map(([optionValue, label]) => (
+          <option value={label} key={optionValue} />
+        ))}
+      </datalist>
+    </>
   );
 }
 
