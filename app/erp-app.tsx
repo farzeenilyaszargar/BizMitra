@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { useEffect, useId, useMemo, useState } from "react";
 
-type Language = "en" | "hi";
+type Language = "en" | "hi" | "pa";
 type ModuleKey =
   | "dashboard"
   | "billing"
@@ -261,25 +261,43 @@ const copy = {
     online: "ऑनलाइन सिंक",
     offline: "ऑफलाइन तैयार",
   },
+  pa: {
+    app: "ਬਿਜਮਿਤ੍ਰ",
+    tagline: "ਭਾਰਤੀ ਵਪਾਰ ਲਈ ਡੈਸਕਟਾਪ ERP",
+    search: "ਬਿਲ, ਪਾਰਟੀ, ਆਈਟਮ ਖੋਜੋ",
+    quickBill: "ਨਵਾਂ ਬਿਲ",
+    collect: "ਭੁਗਤਾਨ ਲਵੋ",
+    addStock: "ਸਟਾਕ ਜੋੜੋ",
+    export: "CSV ਐਕਸਪੋਰਟ",
+    online: "ਆਨਲਾਈਨ ਸਿੰਕ",
+    offline: "ਆਫਲਾਈਨ ਤਿਆਰ",
+  },
 };
+
+const languageOptions: Array<{ value: Language; label: string }> = [
+  { value: "en", label: "English" },
+  { value: "hi", label: "हिंदी" },
+  { value: "pa", label: "ਪੰਜਾਬੀ" },
+];
 
 const modules: Array<{
   key: ModuleKey;
   label: string;
   hi: string;
+  pa: string;
   icon: typeof Home;
 }> = [
-  { key: "dashboard", label: "Dashboard", hi: "डैशबोर्ड", icon: Home },
-  { key: "billing", label: "Sales billing", hi: "बिक्री बिल", icon: ReceiptText },
-  { key: "inventory", label: "Inventory", hi: "स्टॉक", icon: Boxes },
-  { key: "parties", label: "Parties", hi: "पार्टी खाते", icon: Users },
-  { key: "purchases", label: "Purchases", hi: "खरीद", icon: PackagePlus },
-  { key: "payments", label: "Payments", hi: "पेमेंट", icon: IndianRupee },
-  { key: "mandi", label: "Mandi trade", hi: "मंडी व्यापार", icon: Truck },
-  { key: "reports", label: "Reports", hi: "रिपोर्ट", icon: BarChart3 },
+  { key: "dashboard", label: "Dashboard", hi: "डैशबोर्ड", pa: "ਡੈਸ਼ਬੋਰਡ", icon: Home },
+  { key: "billing", label: "Sales billing", hi: "बिक्री बिल", pa: "ਵਿਕਰੀ ਬਿਲ", icon: ReceiptText },
+  { key: "inventory", label: "Inventory", hi: "स्टॉक", pa: "ਸਟਾਕ", icon: Boxes },
+  { key: "parties", label: "Parties", hi: "पार्टी खाते", pa: "ਪਾਰਟੀ ਖਾਤੇ", icon: Users },
+  { key: "purchases", label: "Purchases", hi: "खरीद", pa: "ਖਰੀਦ", icon: PackagePlus },
+  { key: "payments", label: "Payments", hi: "पेमेंट", pa: "ਭੁਗਤਾਨ", icon: IndianRupee },
+  { key: "mandi", label: "Mandi trade", hi: "मंडी व्यापार", pa: "ਮੰਡੀ ਵਪਾਰ", icon: Truck },
+  { key: "reports", label: "Reports", hi: "रिपोर्ट", pa: "ਰਿਪੋਰਟ", icon: BarChart3 },
 ];
 
-const settingsModule = { key: "settings" as const, label: "Settings", hi: "सेटिंग्स", icon: Settings };
+const settingsModule = { key: "settings" as const, label: "Settings", hi: "सेटिंग्स", pa: "ਸੈਟਿੰਗਾਂ", icon: Settings };
 
 const gstCatalogSource = "Official GST goods rate reference: CBIC GST Rates of Goods portal";
 
@@ -382,6 +400,12 @@ function getParty(state: BusinessState, partyId: string) {
 
 function getItem(state: BusinessState, itemId: string) {
   return state.items.find((item) => item.id === itemId) ?? state.items[0];
+}
+
+function localizedLabel(value: { label: string; hi: string; pa: string }, language: Language) {
+  if (language === "hi") return value.hi;
+  if (language === "pa") return value.pa;
+  return value.label;
 }
 
 function searchCatalogItems(value: string) {
@@ -584,7 +608,7 @@ export function ErpApp() {
                   type="button"
                 >
                   <Icon size={18} />
-                  <span>{language === "hi" ? module.hi : module.label}</span>
+                  <span>{localizedLabel(module, language)}</span>
                 </button>
               );
             })}
@@ -600,7 +624,7 @@ export function ErpApp() {
               type="button"
             >
               <Settings size={18} />
-              <span>{language === "hi" ? settingsModule.hi : settingsModule.label}</span>
+              <span>{localizedLabel(settingsModule, language)}</span>
             </button>
             <div className="sync-card">
               <Cloud size={18} />
@@ -634,10 +658,14 @@ export function ErpApp() {
               )}
             </div>
             <div className="topbar-actions">
-              <button className="ghost-button" type="button" onClick={() => setLanguage(language === "en" ? "hi" : "en")}>
+              <label className="language-picker">
                 <Languages size={17} />
-                <span>{language === "en" ? "हिंदी" : "English"}</span>
-              </button>
+                <select aria-label="Choose language" value={language} onChange={(event) => setLanguage(event.target.value as Language)}>
+                  {languageOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
               <button className="ghost-button" type="button" onClick={resetDemo}>
                 <RotateCcw size={17} />
                 <span>Reset</span>
@@ -654,7 +682,7 @@ export function ErpApp() {
 
           <div className="mobile-context">
             <ActiveModuleIcon size={17} />
-            <span>{language === "hi" ? activeModule.hi : activeModule.label}</span>
+            <span>{localizedLabel(activeModule, language)}</span>
           </div>
 
           <section className="hero-workspace">
@@ -826,17 +854,17 @@ function Dashboard({ state, language }: { state: BusinessState; language: Langua
   const receivable = state.parties.filter((party) => party.balance > 0).reduce((sum, party) => sum + party.balance, 0);
   const lowStock = state.items.filter((item) => item.stock <= item.lowStock).length;
   const metrics = [
-    { label: "Today sales", hi: "आज की बिक्री", value: money(todaySales), trend: `${state.invoices.length} bills`, tone: "teal" },
-    { label: "Cash collected", hi: "नकद वसूली", value: money(cash), trend: "Local day book", tone: "green" },
-    { label: "Pending collection", hi: "उधार वसूली", value: money(receivable), trend: `${state.parties.filter((party) => party.balance > 0).length} parties`, tone: "amber" },
-    { label: "Low stock", hi: "कम स्टॉक", value: `${lowStock} items`, trend: "Reorder list", tone: "rose" },
+    { label: "Today sales", hi: "आज की बिक्री", pa: "ਅੱਜ ਦੀ ਵਿਕਰੀ", value: money(todaySales), trend: `${state.invoices.length} bills`, tone: "teal" },
+    { label: "Cash collected", hi: "नकद वसूली", pa: "ਨਕਦ ਵਸੂਲੀ", value: money(cash), trend: "Local day book", tone: "green" },
+    { label: "Pending collection", hi: "उधार वसूली", pa: "ਬਕਾਇਆ ਵਸੂਲੀ", value: money(receivable), trend: `${state.parties.filter((party) => party.balance > 0).length} parties`, tone: "amber" },
+    { label: "Low stock", hi: "कम स्टॉक", pa: "ਘੱਟ ਸਟਾਕ", value: `${lowStock} items`, trend: "Reorder list", tone: "rose" },
   ];
   return (
     <div className="workspace-grid">
       <section className="metric-grid">
         {metrics.map((metric) => (
           <article className={`metric-card ${metric.tone}`} key={metric.label}>
-            <span>{language === "hi" ? metric.hi : metric.label}</span>
+            <span>{localizedLabel(metric, language)}</span>
             <strong>{metric.value}</strong>
             <em>{metric.trend}</em>
           </article>
