@@ -30,10 +30,10 @@ test("server-renders the ERP product shell", async () => {
 
   const html = await response.text();
   assert.match(html, /<title>Vyapar Setu ERP \| Kirana, Mandi and Trader Business Software<\/title>/i);
-  assert.match(html, /Run billing, stock, payments, and mandi ledgers/);
+  assert.match(html, /Test billing, stock, payments, purchases, and mandi settlement end to end/);
   assert.match(html, /Sales billing/);
   assert.match(html, /Mandi trade/);
-  assert.match(html, /GST-ready SaaS workspace/);
+  assert.match(html, /Desktop-first ERP with local test workflows/);
   assert.doesNotMatch(html, /Your site is taking shape|react-loading-skeleton|codex-preview/i);
 });
 
