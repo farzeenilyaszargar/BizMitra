@@ -1,8 +1,8 @@
 {
-  "name": "vyapar-setu-erp",
+  "name": "bizmitra",
   "version": "0.1.0",
   "description": "Desktop ERP for kirana, mandi, wholesaler, and trader businesses in India.",
-  "author": "Vyapar Setu",
+  "author": "BizMitra",
   "private": true,
   "engines": {
     "node": ">=22.13.0"

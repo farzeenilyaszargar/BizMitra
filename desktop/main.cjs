@@ -9,7 +9,7 @@ function createWindow() {
     height: 920,
     minWidth: 1120,
     minHeight: 720,
-    title: "Vyapar Setu ERP",
+    title: "BizMitra",
     backgroundColor: "#f6f8f5",
     show: false,
     webPreferences: {

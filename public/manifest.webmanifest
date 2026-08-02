@@ -1,6 +1,6 @@
 {
-  "name": "Vyapar Setu ERP",
-  "short_name": "Vyapar Setu",
+  "name": "BizMitra",
+  "short_name": "BizMitra",
   "description": "Simple ERP for kirana, mandi and trader businesses in India.",
   "start_url": "/",
   "display": "standalone",

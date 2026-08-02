@@ -29,7 +29,7 @@ test("server-renders the ERP product shell", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>Vyapar Setu ERP \| Kirana, Mandi and Trader Business Software<\/title>/i);
+  assert.match(html, /<title>BizMitra \| Kirana, Mandi and Trader Business Software<\/title>/i);
   assert.match(html, /Test billing, stock, payments, purchases, and mandi settlement end to end/);
   assert.match(html, /Business name/);
   assert.match(html, /Invoice prefix/);
@@ -49,9 +49,9 @@ test("ships PWA assets and removes starter preview", async () => {
   ]);
 
   assert.match(manifest, /"display": "standalone"/);
-  assert.match(manifest, /Vyapar Setu ERP/);
-  assert.match(serviceWorker, /CACHE_NAME = "vyapar-setu-v1"/);
-  assert.match(packageJson, /"name": "vyapar-setu-erp"/);
+  assert.match(manifest, /BizMitra/);
+  assert.match(serviceWorker, /CACHE_NAME = "bizmitra-v1"/);
+  assert.match(packageJson, /"name": "bizmitra"/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.doesNotMatch(page, /_sites-preview|SkeletonPreview|codex-preview/);
   assert.match(layout, /manifest: "\/manifest\.webmanifest"/);

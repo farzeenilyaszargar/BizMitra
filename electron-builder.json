@@ -1,6 +1,6 @@
 {
-  "appId": "in.vyaparsetu.erp",
-  "productName": "Vyapar Setu ERP",
+  "appId": "in.bizmitra.erp",
+  "productName": "BizMitra",
   "directories": {
     "output": "release"
   },

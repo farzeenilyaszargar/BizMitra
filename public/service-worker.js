@@ -1,4 +1,4 @@
-const CACHE_NAME = "vyapar-setu-v1";
+const CACHE_NAME = "bizmitra-v1";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/favicon.svg"];
 
 self.addEventListener("install", (event) => {

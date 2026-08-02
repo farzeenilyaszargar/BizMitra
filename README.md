@@ -1,6 +1,6 @@
-# Vyapar Setu ERP
+# BizMitra
 
-Vyapar Setu ERP is a desktop-first business app for kirana shops, mandi traders,
+BizMitra is a desktop-first business app for kirana shops, mandi traders,
 wholesalers, distributors, and Indian trade businesses. It includes billing,
 inventory, parties, purchases, payments, mandi lots, reports, GST-ready UI, and
 Hindi/English switching.

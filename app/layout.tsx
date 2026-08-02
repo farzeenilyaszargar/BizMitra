@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Vyapar Setu ERP",
+  title: "BizMitra",
   description:
     "A simple, bilingual ERP for kirana shops, mandi traders, wholesalers, and Indian business owners.",
   manifest: "/manifest.webmanifest",
