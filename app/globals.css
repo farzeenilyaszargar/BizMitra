@@ -723,6 +723,36 @@ button {
   padding: 14px;
 }
 
+.catalog-results {
+  display: grid;
+  gap: 8px;
+}
+
+.catalog-result {
+  background: #f8faf9;
+  border: 1px solid #d8e2dd;
+  border-radius: 8px;
+  color: #10231f;
+  cursor: pointer;
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  text-align: left;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.catalog-result:hover,
+.catalog-result:focus-visible {
+  background: #eef7f3;
+  border-color: #16826f;
+  transform: translateY(-1px);
+}
+
+.catalog-result span {
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
 .bill-summary {
   align-self: start;
 }

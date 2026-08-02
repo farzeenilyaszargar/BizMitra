@@ -383,14 +383,14 @@ function getItem(state: BusinessState, itemId: string) {
   return state.items.find((item) => item.id === itemId) ?? state.items[0];
 }
 
-function findCatalogItem(value: string) {
+function searchCatalogItems(value: string) {
   const normalized = value.trim().toLowerCase();
-  if (!normalized) return null;
-  return gstCatalog.find((catalogItem) =>
+  if (!normalized) return [];
+  return gstCatalog.filter((catalogItem) =>
     [catalogItem.name, catalogItem.hsn, ...catalogItem.aliases].some((candidate) =>
-      candidate.toLowerCase() === normalized || candidate.toLowerCase().includes(normalized),
+      candidate.toLowerCase().includes(normalized),
     ),
-  ) ?? null;
+  ).slice(0, 8);
 }
 
 function applyCatalogToItemForm(current: ItemForm, catalogItem: GstCatalogItem): ItemForm {
@@ -964,6 +964,7 @@ function Billing({ state, mutate }: { state: BusinessState; mutate: (updater: (c
 
 function Inventory({ state, mutate }: { state: BusinessState; mutate: (updater: (current: BusinessState) => BusinessState, message: string) => void }) {
   const [form, setForm] = useState<ItemForm>({ catalogSearch: "", name: "", unit: "pcs", hsn: "", stock: "0", lowStock: "5", saleRate: "0", purchaseRate: "0", gstRate: "0" });
+  const catalogMatches = useMemo(() => searchCatalogItems(form.catalogSearch), [form.catalogSearch]);
   function addItem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!form.name.trim()) return;
@@ -986,8 +987,10 @@ function Inventory({ state, mutate }: { state: BusinessState; mutate: (updater: 
     setForm({ catalogSearch: "", name: "", unit: "pcs", hsn: "", stock: "0", lowStock: "5", saleRate: "0", purchaseRate: "0", gstRate: "0" });
   }
   function updateCatalogSearch(value: string) {
-    const catalogItem = findCatalogItem(value);
-    setForm(catalogItem ? applyCatalogToItemForm(form, catalogItem) : { ...form, catalogSearch: value });
+    setForm({ ...form, catalogSearch: value });
+  }
+  function chooseCatalogItem(catalogItem: GstCatalogItem) {
+    setForm(applyCatalogToItemForm(form, catalogItem));
   }
   return (
     <section className="workspace-grid">
@@ -1001,12 +1004,19 @@ function Inventory({ state, mutate }: { state: BusinessState; mutate: (updater: 
       <form className="panel" onSubmit={addItem}>
         <PanelHeader icon={PackagePlus} title="Add item" action="HSN + GST autofill" />
         <div className="mini-form">
-          <label>Search official item<input list="gst-catalog" value={form.catalogSearch} onChange={(event) => updateCatalogSearch(event.target.value)} placeholder="Type rice, atta, soap, onion..." /></label>
-          <datalist id="gst-catalog">
-            {gstCatalog.map((item) => (
-              <option value={item.name} key={item.name}>{`HSN ${item.hsn} | GST ${item.gstRate}%`}</option>
-            ))}
-          </datalist>
+          <label>Search official item<input value={form.catalogSearch} onChange={(event) => updateCatalogSearch(event.target.value)} placeholder="Type rice, atta, soap, onion..." /></label>
+          {form.catalogSearch.trim() ? (
+            <div className="catalog-results" aria-label="Matching GST catalog items">
+              {catalogMatches.length ? catalogMatches.map((item) => (
+                <button className="catalog-result" key={item.name} type="button" onClick={() => chooseCatalogItem(item)}>
+                  <strong>{item.name}</strong>
+                  <span>HSN {item.hsn} | GST {item.gstRate}% | Unit {item.unit}</span>
+                </button>
+              )) : (
+                <div className="empty-row">No matching item found. You can enter HSN and GST manually.</div>
+              )}
+            </div>
+          ) : null}
           <label>Name<input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>
           <label>Unit<input value={form.unit} onChange={(event) => setForm({ ...form, unit: event.target.value })} /></label>
           <label>HSN<input value={form.hsn} onChange={(event) => setForm({ ...form, hsn: event.target.value })} /></label>
