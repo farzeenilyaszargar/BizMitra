@@ -40,3 +40,8 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# desktop app builds
+/release/
+/desktop/dist/
+/desktop/assets/icon.iconset/

@@ -1,0 +1,27 @@
+{
+  "appId": "in.vyaparsetu.erp",
+  "productName": "Vyapar Setu ERP",
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "desktop/main.cjs",
+    "desktop/preload.cjs",
+    "desktop/dist/**/*"
+  ],
+  "extraMetadata": {
+    "main": "desktop/main.cjs"
+  },
+  "mac": {
+    "icon": "desktop/assets/icon.icns",
+    "target": ["dmg", "zip"],
+    "category": "public.app-category.business"
+  },
+  "win": {
+    "target": ["nsis", "portable"]
+  },
+  "linux": {
+    "target": ["AppImage", "deb"],
+    "category": "Office"
+  }
+}
