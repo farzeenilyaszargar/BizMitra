@@ -3,7 +3,29 @@
 BizMitra is a desktop-first business app for kirana shops, mandi traders,
 wholesalers, distributors, and Indian trade businesses. It includes billing,
 inventory, parties, purchases, payments, mandi lots, reports, GST-ready UI, and
-Hindi/English switching.
+Hindi/English/Punjabi switching.
+
+## What Is Built So Far
+
+- Electron desktop app packaging for local testing and OS-specific installers.
+- Modal business onboarding with business type, owner details, GSTIN, city/state,
+  invoice prefix, opening cash, and financial year.
+- Fixed left sidebar with dashboard, billing, inventory, parties, purchases,
+  payments, mandi trade, reports, and settings.
+- Dashboard with sales, cash, pending collection, low stock, owner view, and
+  local sync status.
+- Sales billing workflow with GST totals, payment modes, invoice numbering, and
+  print/export-ready structure.
+- Inventory with demo items, stock ledger, low stock alerts, and item creation.
+- Searchable GST/HSN catalog that lists possible item matches first; clicking a
+  match autofills HSN, GST, unit, and rates.
+- Locked GST value after selecting an official catalog item.
+- Parties, purchases, payments, mandi settlement, reports, and settings screens.
+- Language dropdown for English, Hindi, and Punjabi labels.
+
+BizMitra is currently a functional prototype. It does not yet include a
+production backend, live official GST API integration, user accounts,
+multi-device sync, or statutory filing automation.
 
 ## Prerequisites
 
