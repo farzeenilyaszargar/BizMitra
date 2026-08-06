@@ -3,11 +3,13 @@
 import type { CSSProperties, FormEvent } from "react";
 import {
   BarChart3,
-  Bell,
+  Bot,
   Boxes,
   Calculator,
   CheckCircle2,
   Cloud,
+  Send,
+  X,
   Download,
   FileText,
   Home,
@@ -43,6 +45,11 @@ type ModuleKey =
   | "settings";
 type PartyType = "Customer" | "Supplier" | "Farmer" | "Buyer";
 type PaymentMode = "Cash" | "UPI" | "Bank";
+type AiMessage = {
+  id: string;
+  role: "assistant" | "user";
+  text: string;
+};
 
 type Item = {
   id: string;
@@ -518,6 +525,15 @@ export function ErpApp() {
   const [language, setLanguage] = useState<Language>("en");
   const [active, setActive] = useState<ModuleKey>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiInput, setAiInput] = useState("");
+  const [aiMessages, setAiMessages] = useState<AiMessage[]>([
+    {
+      id: "ai-welcome",
+      role: "assistant",
+      text: "Hi, I am BizMitra AI. For now I can give demo guidance. Soon I will help create bills, add stock, read reports, explain balances, and perform actions inside the app.",
+    },
+  ]);
   const [isOnline, setIsOnline] = useState(true);
   const [query, setQuery] = useState("");
   const [notice, setNotice] = useState("Ready for testing. Try saving a bill, purchase, payment, or mandi lot.");
@@ -601,6 +617,22 @@ export function ErpApp() {
     }));
     setShowOnboarding(false);
     setNotice("Business profile saved. Your billing prefix, GST details, and owner view are ready.");
+  }
+
+  function sendAiMessage(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const prompt = aiInput.trim();
+    if (!prompt) return;
+    setAiMessages((current) => [
+      ...current,
+      { id: id("ai-user"), role: "user", text: prompt },
+      {
+        id: id("ai-assistant"),
+        role: "assistant",
+        text: "This is a demo AI reply. In the production version, BizMitra AI will understand your business data, guide you through the right screen, create records after confirmation, prepare reports, and explain what is happening in simple language.",
+      },
+    ]);
+    setAiInput("");
   }
 
   return (
@@ -697,8 +729,8 @@ export function ErpApp() {
                 <Store size={17} />
                 <span>Business</span>
               </button>
-              <button className="icon-button" type="button" aria-label="Notifications">
-                <Bell size={19} />
+              <button className={`icon-button ai-toggle ${aiOpen ? "active" : ""}`} type="button" onClick={() => setAiOpen((current) => !current)} aria-label="Open BizMitra AI assistant">
+                <Bot size={19} />
               </button>
             </div>
           </header>
@@ -749,6 +781,35 @@ export function ErpApp() {
           {active === "reports" && <Reports state={state} />}
           {active === "settings" && <SettingsView state={state} onEditBusiness={() => setShowOnboarding(true)} onResetDemo={resetDemo} />}
         </section>
+        <aside className={`ai-chat-drawer ${aiOpen ? "open" : ""}`} aria-label="BizMitra AI chat">
+          <div className="ai-chat-head">
+            <div>
+              <span>BizMitra AI</span>
+              <strong>Ask, understand, and act</strong>
+            </div>
+            <button className="icon-button" type="button" onClick={() => setAiOpen(false)} aria-label="Close BizMitra AI chat">
+              <X size={18} />
+            </button>
+          </div>
+          <div className="ai-chat-body">
+            {aiMessages.map((message) => (
+              <div className={`ai-message ${message.role}`} key={message.id}>
+                {message.text}
+              </div>
+            ))}
+          </div>
+          <div className="ai-suggestion-grid">
+            {["How do I make a bill?", "Show pending collections", "Help me add stock"].map((suggestion) => (
+              <button key={suggestion} type="button" onClick={() => setAiInput(suggestion)}>{suggestion}</button>
+            ))}
+          </div>
+          <form className="ai-chat-form" onSubmit={sendAiMessage}>
+            <input value={aiInput} onChange={(event) => setAiInput(event.target.value)} placeholder="Ask BizMitra AI..." aria-label="Ask BizMitra AI" />
+            <button className="primary-button" type="submit" aria-label="Send message">
+              <Send size={17} />
+            </button>
+          </form>
+        </aside>
       </div>
     </main>
   );
