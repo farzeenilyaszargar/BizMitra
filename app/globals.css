@@ -541,6 +541,210 @@ button {
   border-top: 4px solid #e11d48;
 }
 
+.mini-bar-chart {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  min-height: 180px;
+}
+
+.mini-bar {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mini-bar-track {
+  align-items: end;
+  background: #eef3f0;
+  border: 1px solid #d7dfd9;
+  border-radius: 8px;
+  display: flex;
+  height: 138px;
+  overflow: hidden;
+  padding: 5px;
+}
+
+.mini-bar-track span {
+  background: linear-gradient(180deg, #0f766e, #16a34a);
+  border-radius: 6px;
+  display: block;
+  height: var(--bar-height);
+  min-height: 6px;
+  transition: height 220ms ease;
+  width: 100%;
+}
+
+.mini-bar small {
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 800;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.horizontal-bars {
+  display: grid;
+  gap: 12px;
+}
+
+.hbar-row {
+  display: grid;
+  gap: 7px;
+}
+
+.hbar-label,
+.split-stat {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.hbar-label span,
+.split-stat span {
+  color: #475569;
+  font-size: 0.86rem;
+  font-weight: 800;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hbar-label strong,
+.split-stat strong {
+  color: #10231f;
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+
+.hbar-track {
+  background: #edf3f1;
+  border-radius: 999px;
+  height: 10px;
+  overflow: hidden;
+}
+
+.hbar-track span {
+  background: #0f766e;
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+  transition: width 220ms ease;
+  width: var(--bar-width);
+}
+
+.hbar-track span.green {
+  background: #16a34a;
+}
+
+.hbar-track span.amber {
+  background: #d97706;
+}
+
+.hbar-track span.rose {
+  background: #e11d48;
+}
+
+.donut-wrap {
+  align-items: center;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 112px minmax(0, 1fr);
+}
+
+.donut {
+  align-items: center;
+  aspect-ratio: 1;
+  background:
+    radial-gradient(circle, #ffffff 0 56%, transparent 57%),
+    conic-gradient(#0f766e var(--donut), #e5ebe7 0);
+  border-radius: 50%;
+  display: grid;
+  justify-items: center;
+}
+
+.donut strong {
+  color: #10231f;
+  font-size: 1.35rem;
+}
+
+.donut-wrap span,
+.donut-wrap em {
+  color: #64748b;
+  display: block;
+  font-style: normal;
+}
+
+.donut-wrap > div:last-child strong {
+  color: #10231f;
+  display: block;
+  font-size: 1.28rem;
+  margin: 6px 0 3px;
+}
+
+.split-stat {
+  border-top: 1px solid #e5ebe7;
+  margin-top: 16px;
+  padding-top: 14px;
+}
+
+.indicator-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.indicator-card {
+  background: #f8faf9;
+  border: 1px solid #e5ebe7;
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  min-height: 96px;
+  padding: 12px;
+}
+
+.indicator-card span,
+.indicator-card em {
+  color: #64748b;
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.indicator-card strong {
+  color: #10231f;
+  font-size: 1.12rem;
+}
+
+.indicator-card.teal {
+  border-left: 4px solid #0f766e;
+}
+
+.indicator-card.green {
+  border-left: 4px solid #16a34a;
+}
+
+.indicator-card.amber {
+  border-left: 4px solid #d97706;
+}
+
+.indicator-card.rose {
+  border-left: 4px solid #e11d48;
+}
+
+.report-chart-block {
+  border-top: 1px solid #e5ebe7;
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
 .panel {
   min-width: 0;
   padding: 18px;
@@ -953,8 +1157,23 @@ button {
   .quick-actions,
   .metric-grid,
   .owner-grid,
+  .indicator-grid,
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .mini-bar-chart {
+    gap: 6px;
+    min-height: 146px;
+  }
+
+  .mini-bar-track {
+    height: 104px;
+    padding: 4px;
+  }
+
+  .donut-wrap {
+    grid-template-columns: 92px minmax(0, 1fr);
   }
 
   .line-row {
@@ -991,7 +1210,8 @@ button {
   }
 
   .topbar-actions .ghost-button,
-  .topbar-actions .icon-button {
+  .topbar-actions .icon-button,
+  .language-picker {
     flex: 1;
   }
 

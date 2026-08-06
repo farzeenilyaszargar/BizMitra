@@ -390,6 +390,29 @@ function money(value: number) {
   return `Rs. ${Math.round(value).toLocaleString("en-IN")}`;
 }
 
+function shortMoney(value: number) {
+  const rounded = Math.round(value);
+  if (Math.abs(rounded) >= 10000000) return `Rs. ${(rounded / 10000000).toFixed(1)}Cr`;
+  if (Math.abs(rounded) >= 100000) return `Rs. ${(rounded / 100000).toFixed(1)}L`;
+  if (Math.abs(rounded) >= 1000) return `Rs. ${(rounded / 1000).toFixed(1)}K`;
+  return `Rs. ${rounded.toLocaleString("en-IN")}`;
+}
+
+function percent(value: number, total: number) {
+  if (!total) return 0;
+  return Math.max(0, Math.min(100, Math.round((value / total) * 100)));
+}
+
+function dateKey(offset: number) {
+  const date = new Date();
+  date.setDate(date.getDate() - offset);
+  return date.toISOString().slice(0, 10);
+}
+
+function dayLabel(date: string) {
+  return new Date(`${date}T00:00:00`).toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+}
+
 function csvEscape(value: string | number) {
   return `"${String(value).replaceAll('"', '""')}"`;
 }
@@ -848,11 +871,92 @@ function Onboarding({
   );
 }
 
+function MiniBarChart({ data }: { data: Array<{ label: string; value: number }> }) {
+  const max = Math.max(1, ...data.map((item) => item.value));
+  return (
+    <div className="mini-bar-chart">
+      {data.map((item) => (
+        <div className="mini-bar" key={item.label}>
+          <div className="mini-bar-track" title={`${item.label}: ${money(item.value)}`}>
+            <span style={{ "--bar-height": `${Math.max(6, percent(item.value, max))}%` } as CSSProperties} />
+          </div>
+          <small>{item.label}</small>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function HorizontalBars({ data }: { data: Array<{ label: string; value: number; tone?: string }> }) {
+  const max = Math.max(1, ...data.map((item) => Math.abs(item.value)));
+  return (
+    <div className="horizontal-bars">
+      {data.map((item) => (
+        <div className="hbar-row" key={item.label}>
+          <div className="hbar-label">
+            <span>{item.label}</span>
+            <strong>{shortMoney(item.value)}</strong>
+          </div>
+          <div className="hbar-track">
+            <span className={item.tone ?? ""} style={{ "--bar-width": `${Math.max(3, percent(Math.abs(item.value), max))}%` } as CSSProperties} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DonutIndicator({ label, value, total }: { label: string; value: number; total: number }) {
+  const share = percent(value, total);
+  return (
+    <div className="donut-wrap">
+      <div className="donut" style={{ "--donut": `${share}%` } as CSSProperties}>
+        <strong>{share}%</strong>
+      </div>
+      <div>
+        <span>{label}</span>
+        <strong>{shortMoney(value)}</strong>
+        <em>of {shortMoney(total)}</em>
+      </div>
+    </div>
+  );
+}
+
+function HealthIndicators({ items }: { items: Array<{ label: string; value: string; detail: string; tone: string }> }) {
+  return (
+    <div className="indicator-grid">
+      {items.map((item) => (
+        <article className={`indicator-card ${item.tone}`} key={item.label}>
+          <span>{item.label}</span>
+          <strong>{item.value}</strong>
+          <em>{item.detail}</em>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 function Dashboard({ state, language }: { state: BusinessState; language: Language }) {
   const todaySales = state.invoices.reduce((sum, invoice) => sum + invoice.total, 0);
   const cash = state.business.openingCash + state.payments.filter((payment) => payment.mode === "Cash").reduce((sum, payment) => sum + payment.amount, 0);
   const receivable = state.parties.filter((party) => party.balance > 0).reduce((sum, party) => sum + party.balance, 0);
   const lowStock = state.items.filter((item) => item.stock <= item.lowStock).length;
+  const payable = state.parties.filter((party) => party.balance < 0).reduce((sum, party) => sum + Math.abs(party.balance), 0);
+  const totalSales = state.invoices.reduce((sum, invoice) => sum + invoice.total, 0);
+  const creditSales = state.invoices.filter((invoice) => invoice.paymentMode === "Credit").reduce((sum, invoice) => sum + invoice.total, 0);
+  const paidSales = Math.max(0, totalSales - creditSales);
+  const inventoryValue = state.items.reduce((sum, item) => sum + item.stock * item.saleRate, 0);
+  const dailySales = Array.from({ length: 7 }, (_, index) => {
+    const date = dateKey(6 - index);
+    return {
+      label: dayLabel(date),
+      value: state.invoices.filter((invoice) => invoice.at === date).reduce((sum, invoice) => sum + invoice.total, 0),
+    };
+  });
+  const topStockValue = [...state.items]
+    .sort((a, b) => b.stock * b.saleRate - a.stock * a.saleRate)
+    .slice(0, 5)
+    .map((item) => ({ label: item.name, value: item.stock * item.saleRate }));
   const metrics = [
     { label: "Today sales", hi: "आज की बिक्री", pa: "ਅੱਜ ਦੀ ਵਿਕਰੀ", value: money(todaySales), trend: `${state.invoices.length} bills`, tone: "teal" },
     { label: "Cash collected", hi: "नकद वसूली", pa: "ਨਕਦ ਵਸੂਲੀ", value: money(cash), trend: "Local day book", tone: "green" },
@@ -869,6 +973,33 @@ function Dashboard({ state, language }: { state: BusinessState; language: Langua
             <em>{metric.trend}</em>
           </article>
         ))}
+      </section>
+      <section className="panel wide">
+        <PanelHeader icon={BarChart3} title="Sales trend" action="Last 7 days" />
+        <MiniBarChart data={dailySales} />
+      </section>
+      <section className="panel">
+        <PanelHeader icon={IndianRupee} title="Paid vs credit" action="Collection clarity" />
+        <DonutIndicator label="Paid sales" value={paidSales} total={Math.max(1, totalSales)} />
+        <div className="split-stat">
+          <span>Credit sales</span>
+          <strong>{shortMoney(creditSales)}</strong>
+        </div>
+      </section>
+      <section className="panel wide">
+        <PanelHeader icon={Boxes} title="Top stock value" action={shortMoney(inventoryValue)} />
+        <HorizontalBars data={topStockValue} />
+      </section>
+      <section className="panel">
+        <PanelHeader icon={ShieldCheck} title="Business health" action="At a glance" />
+        <HealthIndicators
+          items={[
+            { label: "Receivable", value: shortMoney(receivable), detail: "Money to collect", tone: "amber" },
+            { label: "Payable", value: shortMoney(payable), detail: "Money to pay", tone: "rose" },
+            { label: "Stock value", value: shortMoney(inventoryValue), detail: `${state.items.length} items`, tone: "teal" },
+            { label: "Risk items", value: `${lowStock}`, detail: "Below reorder", tone: lowStock ? "rose" : "green" },
+          ]}
+        />
       </section>
       <section className="panel wide">
         <PanelHeader icon={Calculator} title="Owner day view" action="Live from saved workflows" />
@@ -1253,6 +1384,17 @@ function Reports({ state }: { state: BusinessState }) {
   const sales = state.invoices.reduce((sum, invoice) => sum + invoice.total, 0);
   const purchases = state.purchases.reduce((sum, purchase) => sum + purchase.total, 0);
   const gst = state.invoices.reduce((sum, invoice) => sum + invoice.gst, 0);
+  const receivable = state.parties.filter((party) => party.balance > 0).reduce((sum, party) => sum + party.balance, 0);
+  const payable = state.parties.filter((party) => party.balance < 0).reduce((sum, party) => sum + Math.abs(party.balance), 0);
+  const stockValue = state.items.reduce((sum, item) => sum + item.stock * item.saleRate, 0);
+  const lowStock = state.items.filter((item) => item.stock <= item.lowStock).length;
+  const reportBars = [
+    { label: "Sales", value: sales, tone: "teal" },
+    { label: "Purchases", value: purchases, tone: "amber" },
+    { label: "Receivable", value: receivable, tone: "green" },
+    { label: "Payable", value: payable, tone: "rose" },
+    { label: "Stock value", value: stockValue, tone: "teal" },
+  ];
   function exportLedger() {
     downloadCsv("bizmitra-ledger.csv", [
       ["Date", "Type", "Description", "Debit", "Credit"],
@@ -1269,10 +1411,24 @@ function Reports({ state }: { state: BusinessState }) {
           <StatusLine label="GST collected" value={money(gst)} />
           <StatusLine label="Estimated gross margin" value={money(sales - purchases)} />
         </div>
+        <div className="report-chart-block">
+          <HorizontalBars data={reportBars} />
+        </div>
         <div className="action-row">
           <button className="primary-button" type="button" onClick={exportLedger}><Download size={17} />Export ledger CSV</button>
           <button className="ghost-button" type="button" onClick={() => window.print()}><Printer size={17} />Print reports</button>
         </div>
+      </div>
+      <div className="panel">
+        <PanelHeader icon={ShieldCheck} title="Stat indicators" action="Watchlist" />
+        <HealthIndicators
+          items={[
+            { label: "GST due", value: shortMoney(gst), detail: "From sales bills", tone: "teal" },
+            { label: "Margin", value: shortMoney(sales - purchases), detail: "Sales minus purchases", tone: sales >= purchases ? "green" : "rose" },
+            { label: "Low stock", value: `${lowStock}`, detail: "Needs reorder", tone: lowStock ? "amber" : "green" },
+            { label: "Ledger", value: `${state.ledger.length}`, detail: "Audit entries", tone: "teal" },
+          ]}
+        />
       </div>
       <div className="panel">
         <PanelHeader icon={FileText} title="Audit ledger" action={`${state.ledger.length} entries`} />
